@@ -4,12 +4,16 @@
 #include <iostream>
 #include <unistd.h>
 #include <limits.h>   // for PATH_MAX
+#include "permissions_db.h"   // for PATH_MAX
 
 
 // Yeah, global variable is ugly, but this is just an example and we want to access
 // the concatenator instance from within the concatenate method handler to be able
 // to emit signals.
 sdbus::IObject* g_concatenator{};
+
+// Мой объект для работы с базой данных
+permissions_db *g_db = nullptr;
 
 void concatenate(sdbus::MethodCall call)
 {
@@ -37,7 +41,8 @@ void concatenate(sdbus::MethodCall call)
     }
 
     // 2 - INSERT PATH TO DATA BASE
-    
+    g_db->insert_permission(path, 0);
+
 
 
 
@@ -90,6 +95,11 @@ int main(int argc, char *argv[])
     concatenator->addVTable( sdbus::MethodVTableItem{sdbus::MethodName{"concatenate"}, sdbus::Signature{"ais"}, {}, sdbus::Signature{"s"}, {}, &concatenate, {}}
                            , sdbus::SignalVTableItem{sdbus::MethodName{"concatenated"}, sdbus::Signature{"s"}, {}, {}} )
                            .forInterface(interfaceName);
+
+    // Создаем экземпляр permissions_db
+    permissions_db db("permissions.db");
+    // Присваиваем его глобальной переменной
+    g_db = &db;
 
     // Run the I/O event loop on the bus connection.
     connection->enterEventLoop();

@@ -35,10 +35,19 @@ int main(int argc, char *argv[])
     {
         auto method = concatenatorProxy->createMethodCall(interfaceName, concatenate);
         method << numbers << separator;
-        auto reply = concatenatorProxy->callMethod(method);
-        std::string result;
-        reply >> result;
-        assert(result == "1:2:3");
+        try
+        {
+            auto reply = concatenatorProxy->callMethod(method);
+            std::string result;
+            reply >> result;
+            assert(result == "1:2:3");
+        }
+        catch(const std::exception& e)
+        {
+            std::cerr << e.what() << '\n';
+        }
+        
+
     }
 
     // Invoke concatenate again, this time with no numbers and we shall get an error

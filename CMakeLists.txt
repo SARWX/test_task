@@ -8,7 +8,9 @@ find_package(sdbus-c++ REQUIRED)
 add_executable(server server.cpp)
 add_executable(client client.cpp)
 
-add_executable(sql_test sql_test.cpp)
+add_library(permissions_db STATIC permissions_db.cpp)
+target_link_libraries(server PRIVATE SDBusCpp::sdbus-c++ permissions_db sqlite3)
+
 
 
 # Use the sdbus-c++ target in SDBusCpp namespace
@@ -16,7 +18,7 @@ add_executable(sql_test sql_test.cpp)
 target_link_libraries(server PRIVATE SDBusCpp::sdbus-c++)
 target_link_libraries(client PRIVATE SDBusCpp::sdbus-c++)
 
-target_link_libraries(sql_test PRIVATE sqlite3)
+target_link_libraries(permissions_db PRIVATE sqlite3)
 
 
 add_custom_target(clean-all
