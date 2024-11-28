@@ -3,6 +3,12 @@
 
 #include <unistd.h>
 
+/**
+ * @brief Enum representing various permission types.
+ *
+ * This enumeration defines the different types of permissions that can be
+ * checked and granted.
+ */
 enum Permissions {
   SystemTime = 0, /* permission to get system time */
   // ...

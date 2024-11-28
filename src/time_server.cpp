@@ -7,6 +7,20 @@
 #include <string>
 #include <unistd.h>
 
+/**
+ * @brief Gets the current system time.
+ *
+ * This function checks if the application has permission to access the system
+ * time. If permission is granted, the current system time (timestamp) is
+ * returned. If the application does not have permission, an error reply is sent
+ * back.
+ *
+ * @param call The MethodCall object containing information about the D-Bus
+ * call.
+ *
+ * @retval uint64_t The current system time in Unix timestamp format (seconds
+ * since the epoch).
+ */
 uint64_t GetSystemTime(sdbus::MethodCall call) {
   uint64_t timestamp = 0; /* variable for result (current time) */
 
@@ -33,7 +47,7 @@ uint64_t GetSystemTime(sdbus::MethodCall call) {
               << " have permission: " << req_permision << std::endl;
 #endif
   } catch (const sdbus::Error &e) {
-    std::cerr << "Got concatenate error " << e.getName() << " with message "
+    std::cerr << "Got error " << e.getName() << " with message "
               << e.getMessage() << std::endl;
   }
 

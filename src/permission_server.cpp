@@ -8,6 +8,17 @@
 
 static permissions_db *g_db = nullptr;
 
+/**
+ * @brief Handles a request for permission.
+ *
+ * This function is invoked when a request for a permission is received.
+ * It extracts the permission code from the message, checks its validity,
+ * converts the process ID (PID) to a system path, and inserts the permission
+ * data into the database.
+ *
+ * @param call The method call object that contains the incoming request.
+ * @retval None.
+ */
 void RequestPermission(sdbus::MethodCall call) {
   // get pid from message
   pid_t current_pid = call.getCredsPid();
@@ -42,6 +53,18 @@ void RequestPermission(sdbus::MethodCall call) {
   reply.send();
 }
 
+/**
+ * @brief Checks if an application has the specified permission.
+ *
+ * This function checks the application's execution path and verifies
+ * whether the application has the given permission by looking it up
+ * in the database.
+ *
+ * @param applicationExecPath The executable path of the application.
+ * @param permissionEnumCode The permission code to check.
+ * @retval true if the application has the specified permission,
+ *         false otherwise.
+ */
 bool CheckApplicationHasPermission(std::string applicationExecPath,
                                    int permissionEnumCode) {
   return (

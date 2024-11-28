@@ -4,7 +4,7 @@ project(permission_manager)
 # find sdbus-c++ library
 find_package(sdbus-c++ REQUIRED)
 # find the SQLite libraries
-FindSQLite3
+# FindSQLite3
 
 # add debug information if needed
 # add_compile_definitions(DEBUG)

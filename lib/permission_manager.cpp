@@ -3,10 +3,34 @@
 #include <sdbus-c++/sdbus-c++.h>
 #include <string>
 
+/**
+ * @brief Checks if the given permission value is valid.
+ * 
+ * This function checks whether the provided permission value is within
+ * the valid range of permission codes.
+ * 
+ * @param value The permission code to check.
+ * @retval  true If the permission code is valid.
+ *          false If the permission code is invalid.
+ */
 bool is_valid_permission(int value) {
   return value >= 0 && value < NotValidPermission;
 }
 
+/**
+ * @brief Converts a process ID (PID) to the corresponding system path.
+ * 
+ * This function reads the symbolic link to the executable path of the process
+ * with the given PID from the `/proc` filesystem.
+ * 
+ * @param pid The process ID to resolve.
+ * @param path A character array where the resolved path will be stored.
+ * @param size The size of the `path` buffer.
+ * 
+ * @throws sdbus::Error If there is an error reading the symbolic link.
+ * 
+ * @retval None.
+ */
 void pid_to_path(pid_t pid, char *path, size_t size) {
   // convert PID to path in procfs
   std::string proc_path = "/proc/" + std::to_string(pid) + "/exe";

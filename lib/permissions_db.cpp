@@ -6,6 +6,13 @@
 
 int record_exists = 0; /* result of searching record */
 
+/**
+ * @brief Represents a database for storing and checking permissions.
+ *
+ * This class handles the connection to the SQLite database, allows inserting
+ * permissions for applications, and provides functionality for checking if
+ * a given application has a specific permission.
+ */
 permissions_db::permissions_db(const char *db_name) {
   // open database
   if (sqlite3_open(db_name, &db)) {
@@ -33,8 +40,25 @@ permissions_db::permissions_db(const char *db_name) {
   }
 }
 
+/**
+ * @brief Closes the database connection when the object is destroyed.
+ */
 permissions_db::~permissions_db() { sqlite3_close(db); }
 
+/**
+ * @brief Inserts a permission record into the database.
+ *
+ * This function inserts an application path and a permission code into the
+ * `permissions` table of the database.
+ *
+ * @param app_path The path of the application requesting permission.
+ * @param permission_code The code representing the permission being requested.
+ *
+ * @throws std::runtime_error If the insert operation fails.
+ *
+ * @note Only unique pair (path + permission) will be successfully inserted
+ * @retval None.
+ */
 void permissions_db::insert_permission(const char *app_path,
                                        int permission_code) {
   std::stringstream tmp;
@@ -53,6 +77,20 @@ void permissions_db::insert_permission(const char *app_path,
   }
 }
 
+/**
+ * @brief Checks if an application has a specific permission.
+ *
+ * This function checks the `permissions` table in the database to see if
+ * a record exists for the given application path and permission code.
+ *
+ * @param app_path The path of the application to check.
+ * @param permission_code The permission code to check for.
+ *
+ * @throws std::runtime_error If the select operation fails.
+ *
+ * @retval true If the application has the specified permission.
+ * @retval false If the application does not have the specified permission.
+ */
 bool permissions_db::check_permission(const char *app_path,
                                       int permission_code) {
   record_exists = 0;
