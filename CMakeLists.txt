@@ -4,6 +4,10 @@ project(permission_manager)
 # find sdbus-c++ library
 find_package(sdbus-c++ REQUIRED)
 
+# print debug information
+# add_compile_definitions(DEBUG)
+
+
 # create shared library permission_manager
 add_library(permission_manager SHARED permission_manager.cpp)
 

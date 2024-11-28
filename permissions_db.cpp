@@ -1,102 +1,92 @@
 #include "permissions_db.h"
-#include <iostream>  // Для std::cerr
-#include <sstream>   // Для std::stringstream
 #include <iostream>
-#include <limits.h>
 #include <sdbus-c++/sdbus-c++.h>
+#include <sstream>
 #include <string>
-#include <unistd.h>
-#include <vector>
 
-int record_exists = 0;
+int record_exists = 0; /* result of searching record */
 
-permissions_db::permissions_db(const char* db_name) {
-    // Открытие базы данных
-    if (sqlite3_open(db_name, &db)) {
-        std::cerr << "Не удается открыть базу данных" << std::endl;
-        throw std::runtime_error(sqlite3_errmsg(db));
-    }
+permissions_db::permissions_db(const char *db_name) {
+  // open database
+  if (sqlite3_open(db_name, &db)) {
+    std::cerr << "Не удается открыть базу данных" << std::endl;
+    throw std::runtime_error(sqlite3_errmsg(db));
+  }
 
-    // SQL-запрос для создания таблицы
-    const char *sql_create =
-    "CREATE TABLE IF NOT EXISTS permissions (\n"
-    "request_id INTEGER PRIMARY KEY AUTOINCREMENT,  -- Уникальный идентификатор запроса\n"
-    "app_path TEXT NOT NULL,                        -- Путь к исполняемому файлу приложения\n"
-    "permission_code INTEGER NOT NULL,              -- Код запрашиваемого разрешения\n"
-    "CONSTRAINT unique_permission                   -- Требование уникальности\n"
-    "UNIQUE (app_path, permission_code)             -- Комбинации двух полей\n"
-    ");";
+  // SQL querry to create (if not exist) table
+  const char *sql_create = "CREATE TABLE IF NOT EXISTS permissions (\n"
+                           "request_id INTEGER PRIMARY KEY AUTOINCREMENT,\n"
+                           "app_path TEXT NOT NULL,\n"
+                           "permission_code INTEGER NOT NULL,\n"
+                           "CONSTRAINT unique_permission\n"
+                           "UNIQUE (app_path, permission_code)\n"
+                           ");";
 
-    // Выполнение запроса на создание таблицы
-    char* errMsg = nullptr;
-    if (sqlite3_exec(db, sql_create, NULL, NULL, &errMsg) != SQLITE_OK) {
-        std::cerr << "Ошибка при создании таблицы" << std::endl;
-        std::string error_msg = errMsg;
-        sqlite3_free(errMsg);
-        sqlite3_close(db);
-        throw std::runtime_error(error_msg);
-    }
-}
-
-permissions_db::~permissions_db() {
+  // execution of table creation querry
+  char *errMsg = nullptr;
+  if (sqlite3_exec(db, sql_create, NULL, NULL, &errMsg) != SQLITE_OK) {
+    std::cerr << "Ошибка при создании таблицы" << std::endl;
+    std::string error_msg = errMsg;
+    sqlite3_free(errMsg);
     sqlite3_close(db);
+    throw std::runtime_error(error_msg);
+  }
 }
 
-void permissions_db::insert_permission(const char* app_path, int permission_code) {
-    std::stringstream tmp;
-    tmp << "INSERT INTO permissions (app_path, permission_code) "
-        << "VALUES ('" << app_path << "', " << permission_code << ");";
+permissions_db::~permissions_db() { sqlite3_close(db); }
 
-    std::string sql_insert_str = tmp.str();
-    const char* sql_insert = sql_insert_str.c_str();
+void permissions_db::insert_permission(const char *app_path,
+                                       int permission_code) {
+  std::stringstream tmp;
+  tmp << "INSERT INTO permissions (app_path, permission_code) "
+      << "VALUES ('" << app_path << "', " << permission_code << ");";
 
-    char* errMsg = nullptr;
-    if (sqlite3_exec(db, sql_insert, NULL, NULL, &errMsg) != SQLITE_OK) {
-        std::cerr << "Ошибка при вставке данных" << std::endl;
-        std::string error_msg = errMsg;
-        sqlite3_free(errMsg);
-        throw std::runtime_error(error_msg);
-    }
+  std::string sql_insert_str = tmp.str();
+  const char *sql_insert = sql_insert_str.c_str();
+
+  char *errMsg = nullptr;
+  if (sqlite3_exec(db, sql_insert, NULL, NULL, &errMsg) != SQLITE_OK) {
+    std::cerr << "Ошибка при вставке данных" << std::endl;
+    std::string error_msg = errMsg;
+    sqlite3_free(errMsg);
+    throw std::runtime_error(error_msg);
+  }
 }
 
-bool permissions_db::check_permission(const char* app_path, int permission_code) {
-    record_exists = 0;
+bool permissions_db::check_permission(const char *app_path,
+                                      int permission_code) {
+  record_exists = 0;
 
-    std::stringstream tmp;
-    tmp << "SELECT * FROM permissions WHERE app_path = '" << app_path 
-                << "' AND permission_code = " << permission_code << ";";
+  std::stringstream tmp;
+  tmp << "SELECT * FROM permissions WHERE app_path = '" << app_path
+      << "' AND permission_code = " << permission_code << ";";
 
-    std::string sql_select_str = tmp.str();
-    const char* sql_select = sql_select_str.c_str();
+  std::string sql_select_str = tmp.str();
+  const char *sql_select = sql_select_str.c_str();
 
-    // TEST
-    std::cout << sql_select_str << std::endl;
+#ifdef DEBUG
+  std::cout << sql_select_str << std::endl;
+#endif
 
-    // bool record_exist = false;
-    // callback функция для проверки наличия записей
-    auto check_exist_callback =[](void *unused, int count, char **data, char **columns) -> int
-    {
-        
-        if (count > 0)
-            record_exists = 1;
+  // callback function to check if result is not empty
+  auto check_exist_callback = [](void *unused, int count, char **data,
+                                 char **columns) -> int {
+    if (count > 0)
+      record_exists = 1;
+    return (0);
+  };
 
-        std::cout << "unused : " << unused << std::endl;
-        std::cout << "count : " << count << std::endl;
-        std::cout << "data : " << data << std::endl;
-        std::cout << "columns : " << columns << std::endl;
-        return(0);
-    };
+  char *errMsg = nullptr;
+  if (sqlite3_exec(db, sql_select, check_exist_callback, &record_exists,
+                   &errMsg) != SQLITE_OK) {
+    std::cerr << "Ошибка при выполнении SELECT запроса" << std::endl;
+    std::string error_msg = errMsg;
+    sqlite3_free(errMsg);
+    throw std::runtime_error(error_msg);
+  }
 
-    char* errMsg = nullptr;
-    if (sqlite3_exec(db, sql_select, check_exist_callback, &record_exists, &errMsg) != SQLITE_OK) {
-    // if (sqlite3_exec(db, sql_select, 0, 0, &errMsg) != SQLITE_OK) {
-        std::cerr << "Ошибка при выполнении SELECT запроса" << std::endl;
-        std::string error_msg = errMsg;
-        sqlite3_free(errMsg);
-        throw std::runtime_error(error_msg);
-    }
-
-    // TEST
-    std::cout << record_exists << std::endl;
-    return (record_exists != 0);
+#ifdef DEBUG
+  std::cout << record_exists << std::endl;
+#endif
+  return (record_exists != 0);
 }
