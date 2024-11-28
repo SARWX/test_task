@@ -21,15 +21,13 @@ int main(int argc, char *argv[])
     sdbus::InterfaceName ps_interface{"com.system.permissions"};
 
     enum Permissions time_permision = SystemTime;
-    int64_t timestamp = 0;
+    uint64_t timestamp = 0;
     std::string error_name;
 
     try
     {
         ts_proxy->callMethod("GetSystemTime").onInterface(ts_interface).storeResultsTo(timestamp);
-        // ts_proxy->callMethod("GetSystemTime").onInterface(ts_interface);
-        // ts_proxy.GetSystemTime();
-        std::cout << "HELLO" << std::endl;
+        std::cout << "Current time: " << std::ctime((time_t *)&timestamp);
     }
     catch(const sdbus::Error& e)
     {
@@ -40,11 +38,11 @@ int main(int argc, char *argv[])
     {
         try
         {
-            std::cout << "1111" << std::endl;
+            // std::cout << "1111" << std::endl;
             ps_proxy->callMethod("RequestPermission").onInterface(ps_interface).withArguments((int)time_permision);
-            std::cout << "2222" << std::endl;
+            // std::cout << "2222" << std::endl;
             ts_proxy->callMethod("GetSystemTime").onInterface(ts_interface).storeResultsTo(timestamp);
-            std::cout << "3333" << std::endl;
+            // std::cout << "3333" << std::endl;
             std::cout << "Current time: " << std::ctime((time_t *)&timestamp);
         }
         catch(const sdbus::Error& e)
@@ -53,6 +51,5 @@ int main(int argc, char *argv[])
         }
     }
 
-    sleep(1);
     return 0;
 }

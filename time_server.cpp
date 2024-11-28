@@ -56,15 +56,16 @@ uint64_t GetSystemTime(sdbus::MethodCall call) {
     else
     {
         // Получаем текущую метку времени (timestamp)
+        // timestamp = (uint64_t)(std::time(nullptr));
         timestamp = (uint64_t)(std::time(nullptr));
         std::cout << timestamp << std::endl;
     }
 
     // Отправить ответ с timestamp
     auto reply = call.createReply();
-    reply << timestamp;
+    // reply << timestamp;
     // std::cout << reply. << std::endl;
-    // reply << (timestamp);
+    reply << (uint64_t)(timestamp);
     reply.send();
     // std::cout << "GGGGG" << std::endl;
     return timestamp;
@@ -82,11 +83,11 @@ int main() {
     time_object->addVTable(
         sdbus::MethodVTableItem{
             sdbus::MethodName{"GetSystemTime"},  // Имя метода
-            sdbus::Signature{}, 
+            sdbus::Signature{""}, 
             {}, 
             sdbus::Signature{"t"},  // Тип возвращаемого значения - uint64_t
             {}, 
-            GetSystemTime,  // Обработчик метода
+            &GetSystemTime,  // Обработчик метода
             {}
         }
     ).forInterface("com.system.time");
