@@ -38,20 +38,35 @@ uint64_t GetSystemTime(sdbus::MethodCall call) {
     // Проверяем разрешение для получения времени
     if (!have_permission) 
     {
-        throw sdbus::Error(sdbus::Error::Name{"com.system.time.UnauthorizedAccess"},
-            "Unauthorized access: Application does not have permission to access system time.");
+        // Создаём D-Bus ответ с ошибкой
+        auto reply = call.createErrorReply(
+
+        sdbus::Error(sdbus::Error::Name{"com.system.time.Error.UnauthorizedAccess"}, 
+            "Unauthorized access: Application does not have permission to access system time.")
+        // sdbus::Error(sdbus::Error::Name{"UnauthorizedAccess"},
+        // "Unauthorized access: Application does not have permission to access system time.")
+        );
+        reply.send();  // Отправляем ошибку клиенту
+        return timestamp;        // Завершаем выполнение метода
+
+
+        // throw sdbus::Error(sdbus::Error::Name{"UnauthorizedAccess"},
+        //     "Unauthorized access: Application does not have permission to access system time.");
     }
     else
     {
         // Получаем текущую метку времени (timestamp)
         timestamp = (uint64_t)(std::time(nullptr));
+        std::cout << timestamp << std::endl;
     }
 
     // Отправить ответ с timestamp
     auto reply = call.createReply();
     reply << timestamp;
+    // std::cout << reply. << std::endl;
+    // reply << (timestamp);
     reply.send();
-
+    // std::cout << "GGGGG" << std::endl;
     return timestamp;
 }
 
