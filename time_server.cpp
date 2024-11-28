@@ -1,104 +1,88 @@
-#include <sdbus-c++/sdbus-c++.h>
+#include "permission_manager.h"
+#include <ctime>
 #include <iostream>
 #include <limits.h>
-#include <unistd.h>
-#include <string>
+#include <sdbus-c++/sdbus-c++.h>
 #include <stdexcept>
-#include <ctime>
-#include "permission_manager.h"
+#include <string>
+#include <unistd.h>
 
-
-// Обработчик метода GetSystemTime
 uint64_t GetSystemTime(sdbus::MethodCall call) {
-    uint64_t timestamp = 0; /* Текущее время (результат) */
+  uint64_t timestamp = 0; /* variable for result (current time) */
 
-    pid_t current_pid = call.getCredsPid();         /* PID вызвавшего процесса */
-    char path[PATH_MAX];                            /* Массив для получения абсолютного пути процесса */
-    pid_to_path(current_pid, path, PATH_MAX);       /* Получить абсолютный путь по PID */
-    enum Permissions req_permision = SystemTime;    /* Требуемое разрешение */
+  pid_t current_pid = call.getCredsPid();      /* PID of calling process */
+  char path[PATH_MAX];                         /* array for absolute path */
+  enum Permissions req_permision = SystemTime; /* required permission */
+  pid_to_path(current_pid, path, PATH_MAX);
 
-    // Создать прокси для com.system.permissions
-    sdbus::ServiceName service_name{"com.system.permissions"};
-    sdbus::ObjectPath object_path{"/"};
-    auto permission_proxy = sdbus::createProxy(std::move(service_name), std::move(object_path));
-    sdbus::InterfaceName interface_name{"com.system.permissions"};
-    
-    bool have_permission = false;
-    try
-    {
-        permission_proxy->callMethod("CheckApplicationHasPermission").onInterface(interface_name).withArguments(path, (int)req_permision).storeResultsTo(have_permission);
-        // TEST
-        std::cout << have_permission << std::endl;
-    }
-    catch(const sdbus::Error& e)
-    {
-        std::cerr << "Got concatenate error " << e.getName() << " with message " << e.getMessage() << std::endl;
-    }    
+  // create proxy of com.system.permissions
+  sdbus::ServiceName ps_proxy_name{"com.system.permissions"};
+  sdbus::ObjectPath ps_proxy_path{"/"};
+  auto ps_proxy =
+      sdbus::createProxy(std::move(ps_proxy_name), std::move(ps_proxy_path));
+  sdbus::InterfaceName ts_interface{"com.system.permissions"};
 
-    // Проверяем разрешение для получения времени
-    if (!have_permission) 
-    {
-        // Создаём D-Bus ответ с ошибкой
-        auto reply = call.createErrorReply(
+  bool have_permission = false; /* variable for check result */
+  try {
+    ps_proxy->callMethod("CheckApplicationHasPermission")
+        .onInterface(ts_interface)
+        .withArguments(path, (int)req_permision)
+        .storeResultsTo(have_permission);
+#ifdef DEBUG
+    std::cout << path << (have_permission ? "" : " doesn't")
+              << " have permission: " << req_permision << std::endl;
+#endif
+  } catch (const sdbus::Error &e) {
+    std::cerr << "Got concatenate error " << e.getName() << " with message "
+              << e.getMessage() << std::endl;
+  }
 
-        sdbus::Error(sdbus::Error::Name{"com.system.time.Error.UnauthorizedAccess"}, 
-            "Unauthorized access: Application does not have permission to access system time.")
-        // sdbus::Error(sdbus::Error::Name{"UnauthorizedAccess"},
-        // "Unauthorized access: Application does not have permission to access system time.")
-        );
-        reply.send();  // Отправляем ошибку клиенту
-        return timestamp;        // Завершаем выполнение метода
-
-
-        // throw sdbus::Error(sdbus::Error::Name{"UnauthorizedAccess"},
-        //     "Unauthorized access: Application does not have permission to access system time.");
-    }
-    else
-    {
-        // Получаем текущую метку времени (timestamp)
-        // timestamp = (uint64_t)(std::time(nullptr));
-        timestamp = (uint64_t)(std::time(nullptr));
-        std::cout << timestamp << std::endl;
-    }
-
-    // Отправить ответ с timestamp
+  if (!have_permission) {
+    // return D-Bus reply with Error
+    auto reply = call.createErrorReply(sdbus::Error(
+        sdbus::Error::Name{"com.system.time.Error.UnauthorizedAccess"},
+        "Unauthorized access: Application does not have permission to access "
+        "system time."));
+    reply.send();
+    return timestamp;
+  } else {
+    // return D-Bus reply with timestamp
+    timestamp = (uint64_t)(std::time(nullptr));
+#ifdef DEBUG
+    std::cout << "Current time: " << timestamp << std::endl;
+#endif
     auto reply = call.createReply();
-    // reply << timestamp;
-    // std::cout << reply. << std::endl;
     reply << (uint64_t)(timestamp);
     reply.send();
-    // std::cout << "GGGGG" << std::endl;
-    return timestamp;
+  }
+
+  return timestamp;
 }
 
-int main() {
-    // Создаем подключение к сессионной шине D-Bus
-    sdbus::ServiceName service_name{"com.system.time"};
-    auto connection = sdbus::createSessionBusConnection(service_name);
-    sdbus::ObjectPath object_path{"/"};
+int main(int argc, char *argv[]) {
+  // create D-Bus connection to the session bus
+  // and requests a well-known name on it
+  sdbus::ServiceName ts_name{"com.system.time"};
+  auto ts_connection = sdbus::createSessionBusConnection(ts_name);
+  sdbus::ObjectPath ts_path{"/"};
 
-    // Создаем объект
-    auto time_object = sdbus::createObject(*connection, std::move(object_path));
+  // create time server D-Bus object
+  auto time_object = sdbus::createObject(*ts_connection, std::move(ts_path));
 
-    time_object->addVTable(
-        sdbus::MethodVTableItem{
-            sdbus::MethodName{"GetSystemTime"},  // Имя метода
-            sdbus::Signature{""}, 
-            {}, 
-            sdbus::Signature{"t"},  // Тип возвращаемого значения - uint64_t
-            {}, 
-            &GetSystemTime,  // Обработчик метода
-            {}
-        }
-    ).forInterface("com.system.time");
+  sdbus::InterfaceName ts_interface{"com.system.time"};
+  // register D-Bus methods on the permission server object
+  time_object
+      ->addVTable(sdbus::MethodVTableItem{
+          sdbus::MethodName{"GetSystemTime"}, /* method name */
+          sdbus::Signature{""},               /* input signature */
+          {},                                 /* input parametres names */
+          sdbus::Signature{"t"},              /* output signature */
+          {},                                 /* output parametres names */
+          &GetSystemTime,                     /* method callback function */
+          {}                                  /* flags */
+      })
+      .forInterface(ts_interface);
 
-    // Создаем Прокси сервиса com.system.permissions
-    sdbus::ServiceName proxy_name{"com.system.permissions"};
-    sdbus::ObjectPath proxy_path{"/"};
-    auto concatenatorProxy = sdbus::createProxy(std::move(proxy_name), std::move(proxy_path));
-    sdbus::InterfaceName interfaceName{"com.system.permissions"};
-
-
-    // Запуск основного цикла обработки событий D-Bus
-    connection->enterEventLoop();
+  // run the loop on the connection
+  ts_connection->enterEventLoop();
 }
