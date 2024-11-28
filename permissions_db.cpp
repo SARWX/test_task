@@ -1,6 +1,12 @@
 #include "permissions_db.h"
 #include <iostream>  // Для std::cerr
 #include <sstream>   // Для std::stringstream
+#include <iostream>
+#include <limits.h>
+#include <sdbus-c++/sdbus-c++.h>
+#include <string>
+#include <unistd.h>
+#include <vector>
 
 int record_exists = 0;
 

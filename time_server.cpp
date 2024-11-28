@@ -14,7 +14,7 @@ uint64_t GetSystemTime(sdbus::MethodCall call) {
 
     pid_t current_pid = call.getCredsPid();         /* PID вызвавшего процесса */
     char path[PATH_MAX];                            /* Массив для получения абсолютного пути процесса */
-    pid_to_path(current_pid, path);                 /* Получить абсолютный путь по PID */
+    pid_to_path(current_pid, path, PATH_MAX);       /* Получить абсолютный путь по PID */
     enum Permissions req_permision = SystemTime;    /* Требуемое разрешение */
 
     // Создать прокси для com.system.permissions

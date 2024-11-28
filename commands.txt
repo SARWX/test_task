@@ -1,0 +1,4 @@
+gdbus call -e -d com.system.permissions -o / -m com.system.permissions.RequestPermission 0
+gdbus call -e -d com.system.permissions -o / -m com.system.permissions.CheckApplicationHasPermission /usr/bin/com.example.example 0
+gdbus call -e -d com.system.permissions -o / -m com.system.permissions.CheckApplicationHasPermission /usr/bin/gdbus 0
+gdbus call -e -d com.system.time -o / -m com.system.time.GetSystemTime
