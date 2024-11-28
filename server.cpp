@@ -81,8 +81,8 @@ void concatenate(sdbus::MethodCall call)
 int main(int argc, char *argv[])
 {
     // Create D-Bus connection to (either the session or system) bus and requests a well-known name on it.
-    sdbus::ServiceName serviceName{"org.sdbuscpp.concatenator"};
-    auto connection = sdbus::createBusConnection(serviceName);
+    sdbus::ServiceName serviceName{"com.system.permissions"};
+    auto connection = sdbus::createSessionBusConnection(serviceName);
 
     // Create concatenator D-Bus object.
     sdbus::ObjectPath objectPath{"/org/sdbuscpp/concatenator"};

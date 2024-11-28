@@ -1,12 +1,14 @@
 cmake_minimum_required(VERSION 3.0)
-project(Hello_proj)
+project(permission_manager)
 
 # First, find sdbus-c++
 find_package(sdbus-c++ REQUIRED)
 
 # add_executable(hello hello.cpp)
-add_executable(server server.cpp)
-add_executable(client client.cpp)
+# add_executable(server server.cpp)
+add_executable(server conv_server.cpp)
+# add_executable(client client.cpp)
+add_executable(client conv_client.cpp)
 
 add_library(permissions_db STATIC permissions_db.cpp)
 target_link_libraries(server PRIVATE SDBusCpp::sdbus-c++ permissions_db sqlite3)

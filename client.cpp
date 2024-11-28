@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
     // we are creating the proxy instance without passing connection to it, the proxy
     // will create its own connection automatically (to either system bus or session bus,
     // depending on the context).
-    sdbus::ServiceName destination{"org.sdbuscpp.concatenator"};
+    sdbus::ServiceName destination{"com.system.permissions"};
     sdbus::ObjectPath objectPath{"/org/sdbuscpp/concatenator"};
     auto concatenatorProxy = sdbus::createProxy(std::move(destination), std::move(objectPath));
 
