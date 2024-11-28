@@ -2,6 +2,8 @@
 #include <iostream>  // Для std::cerr
 #include <sstream>   // Для std::stringstream
 
+int record_exists = 0;
+
 permissions_db::permissions_db(const char* db_name) {
     // Открытие базы данных
     if (sqlite3_open(db_name, &db)) {
@@ -49,4 +51,46 @@ void permissions_db::insert_permission(const char* app_path, int permission_code
         sqlite3_free(errMsg);
         throw std::runtime_error(error_msg);
     }
+}
+
+bool permissions_db::check_permission(const char* app_path, int permission_code) {
+    record_exists = 0;
+
+    std::stringstream tmp;
+    tmp << "SELECT * FROM permissions WHERE app_path = '" << app_path 
+                << "' AND permission_code = " << permission_code << ";";
+
+    std::string sql_select_str = tmp.str();
+    const char* sql_select = sql_select_str.c_str();
+
+    // TEST
+    std::cout << sql_select_str << std::endl;
+
+    // bool record_exist = false;
+    // callback функция для проверки наличия записей
+    auto check_exist_callback =[](void *unused, int count, char **data, char **columns) -> int
+    {
+        
+        if (count > 0)
+            record_exists = 1;
+
+        std::cout << "unused : " << unused << std::endl;
+        std::cout << "count : " << count << std::endl;
+        std::cout << "data : " << data << std::endl;
+        std::cout << "columns : " << columns << std::endl;
+        return(0);
+    };
+
+    char* errMsg = nullptr;
+    if (sqlite3_exec(db, sql_select, check_exist_callback, &record_exists, &errMsg) != SQLITE_OK) {
+    // if (sqlite3_exec(db, sql_select, 0, 0, &errMsg) != SQLITE_OK) {
+        std::cerr << "Ошибка при выполнении SELECT запроса" << std::endl;
+        std::string error_msg = errMsg;
+        sqlite3_free(errMsg);
+        throw std::runtime_error(error_msg);
+    }
+
+    // TEST
+    std::cout << record_exists << std::endl;
+    return (record_exists != 0);
 }

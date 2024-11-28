@@ -65,6 +65,11 @@ void HandleRequestPermission(sdbus::MethodCall call)
         reply.send();
 }
 
+bool CheckApplicationHasPermission(std::string applicationExecPath, int permissionEnumCode)
+{
+    return(g_db->check_permission(applicationExecPath.c_str(), permissionEnumCode));
+}
+
 int main(int argc, char *argv[])
 {
     // Create D-Bus connection to the session bus and requests a well-known name on it.
@@ -89,6 +94,10 @@ int main(int argc, char *argv[])
             {}
         }
     ).forInterface("com.system.Permissions");  // Интерфейс
+
+    // Register D-Bus methods and signals on the concatenator object, and exports the object.
+    concatenator->addVTable(sdbus::registerMethod("CheckApplicationHasPermission").implementedAs(CheckApplicationHasPermission))
+                           .forInterface("com.system.Permissions");
 
 
     // Создаем экземпляр permissions_db

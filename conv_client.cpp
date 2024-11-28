@@ -27,10 +27,23 @@ int main(int argc, char *argv[])
         {
             std::cerr << "Got concatenate error " << e.getName() << " with message " << e.getMessage() << std::endl;
         }
+
+   sleep(1);
+
+        try
+        {
+            bool test_bool = false;
+            concatenatorProxy->callMethod("CheckApplicationHasPermission").onInterface(interfaceName).withArguments("/home/sarwx/kernel/dbus_test/test_proj1/build/client", (int)permision_code).storeResultsTo(test_bool);
+            std::cout << test_bool << std::endl;
+        }
+        catch(const sdbus::Error& e)
+        {
+            std::cerr << "Got concatenate error " << e.getName() << " with message " << e.getMessage() << std::endl;
+        }        
     }
 
     // Give sufficient time to receive 'concatenated' signal from the first concatenate invocation
-    sleep(1);
+ 
 
     return 0;
 }
