@@ -5,23 +5,28 @@
 #include <limits.h>   // for PATH_MAX
 #include <unistd.h>
 #include "permission_manager.h"
+#include "permissions_db.h"
 
-pid_t current_pid = 0;
+
+static pid_t current_pid = 0;
+static permissions_db *g_db = nullptr;
 
 // void RequestPermission(permissionEnumCode: int)
 void RequestPermission(int permission_code)
 {
-    // Return error if permission code is not valid
+    // 1 - убедимся, что запрашиваемое разрешение валидно
     if (!is_valid_permission(permission_code))
         throw sdbus::Error(sdbus::Error::Name{"com.system.Permissions.Error"}, 
                                                 "Not valid permission code");
+    //TEST
     std::cout << current_pid << std::endl;
 
-    // Try to get system path to the executable
+    // 2 - преобразуем pid к абсолютному пути в procfs
     std::string proc_path = "/proc/" + std::to_string(current_pid) + "/exe";
     //TEST
     std::cout << proc_path << std::endl;
 
+    // 3 - преобразуем symbol link в системный путь к исполнямому файлу
     char path[PATH_MAX];
 
     ssize_t len = readlink(proc_path.c_str(), path, sizeof(path) - 1);
@@ -36,6 +41,9 @@ void RequestPermission(int permission_code)
         //TEST
         std::cout << "Path of sender: " << path << std::endl;
     }
+
+    // 4 - занесем данные в б.д.
+    g_db->insert_permission(path, 0);
 };
 
 void HandleRequestPermission(sdbus::MethodCall call)
@@ -83,8 +91,10 @@ int main(int argc, char *argv[])
     ).forInterface("com.system.Permissions");  // Интерфейс
 
 
-    // concatenator->addVTable(sdbus::registerMethod("RequestPermission").implementedAs(HandleRequestPermission))
-    //                        .forInterface("com.system.Permissions");
+    // Создаем экземпляр permissions_db
+    permissions_db db("permissions.db");
+    // Присваиваем его глобальной переменной
+    g_db = &db;
 
     // Run the loop on the connection.
     connection->enterEventLoop();
