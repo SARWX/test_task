@@ -8,7 +8,7 @@ enum Permissions {
 };
 
 bool is_valid_permission(int value) {
-    return value >= 0 && value <= NotValidPermission;  // Проверка в диапазоне
+    return value >= 0 && value < NotValidPermission;  // Проверка в диапазоне
 }
 
 #endif // PERMISSION_MANAGER_H

@@ -46,8 +46,6 @@ int main(int argc, char *argv[])
         {
             std::cerr << e.what() << '\n';
         }
-        
-
     }
 
     // Invoke concatenate again, this time with no numbers and we shall get an error

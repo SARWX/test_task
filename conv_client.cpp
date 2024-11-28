@@ -21,6 +21,7 @@ int main(int argc, char *argv[])
         try
         {
             concatenatorProxy->callMethod("RequestPermission").onInterface(interfaceName).withArguments((int)permision_code);
+            // concatenatorProxy->callMethod("RequestPermission").onInterface(interfaceName).withArguments(1)/*.dontExpectReply()*/;
         }
         catch(const sdbus::Error& e)
         {
