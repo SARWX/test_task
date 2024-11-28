@@ -10,6 +10,9 @@ add_executable(server conv_server.cpp)
 # add_executable(client client.cpp)
 add_executable(client conv_client.cpp)
 
+add_executable(time_server time_server.cpp)
+
+
 add_library(permissions_db STATIC permissions_db.cpp)
 target_link_libraries(server PRIVATE SDBusCpp::sdbus-c++ permissions_db sqlite3)
 
@@ -19,6 +22,7 @@ target_link_libraries(server PRIVATE SDBusCpp::sdbus-c++ permissions_db sqlite3)
 # target_link_libraries(hello PRIVATE SDBusCpp::sdbus-c++)
 target_link_libraries(server PRIVATE SDBusCpp::sdbus-c++)
 target_link_libraries(client PRIVATE SDBusCpp::sdbus-c++)
+target_link_libraries(time_server PRIVATE SDBusCpp::sdbus-c++)
 
 target_link_libraries(permissions_db PRIVATE sqlite3)
 

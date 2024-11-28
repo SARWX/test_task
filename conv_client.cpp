@@ -9,10 +9,10 @@
 int main(int argc, char *argv[])
 {
     // Create proxy object for the concatenator object on the server side
-    sdbus::ServiceName destination{"com.system.permissions"};
-    sdbus::ObjectPath objectPath{"/com/system/permissions"};
-    auto concatenatorProxy = sdbus::createProxy(std::move(destination), std::move(objectPath));
-    sdbus::InterfaceName interfaceName{"com.system.Permissions"};
+    sdbus::ServiceName service_name{"com.system.permissions"};
+    sdbus::ObjectPath object_path{"/"};
+    auto concatenatorProxy = sdbus::createProxy(std::move(service_name), std::move(object_path));
+    sdbus::InterfaceName interface_name{"com.system.permissions"};
 
     enum Permissions permision_code = SystemTime;
 
@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
     {
         try
         {
-            concatenatorProxy->callMethod("RequestPermission").onInterface(interfaceName).withArguments((int)permision_code);
+            concatenatorProxy->callMethod("RequestPermission").onInterface(interface_name).withArguments((int)permision_code);
             // concatenatorProxy->callMethod("RequestPermission").onInterface(interfaceName).withArguments(1)/*.dontExpectReply()*/;
         }
         catch(const sdbus::Error& e)
@@ -33,7 +33,7 @@ int main(int argc, char *argv[])
         try
         {
             bool test_bool = false;
-            concatenatorProxy->callMethod("CheckApplicationHasPermission").onInterface(interfaceName).withArguments("/home/sarwx/kernel/dbus_test/test_proj1/build/client", (int)permision_code).storeResultsTo(test_bool);
+            concatenatorProxy->callMethod("CheckApplicationHasPermission").onInterface(interface_name).withArguments("/home/sarwx/kernel/dbus_test/test_proj1/build/client", (int)permision_code).storeResultsTo(test_bool);
             std::cout << test_bool << std::endl;
         }
         catch(const sdbus::Error& e)

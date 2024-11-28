@@ -2,8 +2,8 @@
 #include <vector>
 #include <string>
 #include <iostream>
-#include <limits.h>   // for PATH_MAX
 #include <unistd.h>
+#include <limits.h>   // for PATH_MAX
 #include "permission_manager.h"
 #include "permissions_db.h"
 
@@ -21,26 +21,29 @@ void RequestPermission(int permission_code)
     //TEST
     std::cout << current_pid << std::endl;
 
-    // 2 - преобразуем pid к абсолютному пути в procfs
-    std::string proc_path = "/proc/" + std::to_string(current_pid) + "/exe";
-    //TEST
-    std::cout << proc_path << std::endl;
+                        // // 2 - преобразуем pid к абсолютному пути в procfs
+                        // std::string proc_path = "/proc/" + std::to_string(current_pid) + "/exe";
+                        // //TEST
+                        // std::cout << proc_path << std::endl;
 
-    // 3 - преобразуем symbol link в системный путь к исполнямому файлу
-    char path[PATH_MAX];
+                        // // 3 - преобразуем symbol link в системный путь к исполнямому файлу
+                        // char path[PATH_MAX];
 
-    ssize_t len = readlink(proc_path.c_str(), path, sizeof(path) - 1);
+                        // ssize_t len = readlink(proc_path.c_str(), path, sizeof(path) - 1);
 
-    if (len == -1) {
-        // В случае ошибки выбрасываем D-Bus ошибку
-        throw sdbus::Error(sdbus::Error::Name{"com.system.Permissions.Error"}, 
-                "Error reading symbolic link: " + std::string(strerror(errno)));
-    } else {
-        // Завершаем строку
-        path[len] = '\0';
+                        // if (len == -1) {
+                        //     // В случае ошибки выбрасываем D-Bus ошибку
+                        //     throw sdbus::Error(sdbus::Error::Name{"com.system.Permissions.Error"}, 
+                        //             "Error reading symbolic link: " + std::string(strerror(errno)));
+                        // } else {
+                        //     // Завершаем строку
+                        //     path[len] = '\0';
+        char path[PATH_MAX];
+        pid_to_path(current_pid, path);
+
         //TEST
         std::cout << "Path of sender: " << path << std::endl;
-    }
+    // }
 
     // 4 - занесем данные в б.д.
     g_db->insert_permission(path, 0);
@@ -77,7 +80,7 @@ int main(int argc, char *argv[])
     auto connection = sdbus::createSessionBusConnection(serviceName);       // Соединение на сессионной шине
 
     // Create concatenator D-Bus object.
-    sdbus::ObjectPath objectPath{"/com/system/permissions"};
+    sdbus::ObjectPath objectPath{"/"};
     auto concatenator = sdbus::createObject(*connection, std::move(objectPath));
 
 
@@ -93,11 +96,11 @@ int main(int argc, char *argv[])
             HandleRequestPermission,  // Обработчик метода
             {}
         }
-    ).forInterface("com.system.Permissions");  // Интерфейс
+    ).forInterface("com.system.permissions");  // Интерфейс
 
     // Register D-Bus methods and signals on the concatenator object, and exports the object.
     concatenator->addVTable(sdbus::registerMethod("CheckApplicationHasPermission").implementedAs(CheckApplicationHasPermission))
-                           .forInterface("com.system.Permissions");
+                           .forInterface("com.system.permissions");
 
 
     // Создаем экземпляр permissions_db
@@ -108,3 +111,10 @@ int main(int argc, char *argv[])
     // Run the loop on the connection.
     connection->enterEventLoop();
 }
+
+
+// gdbus call -e -d com.system.permissions -o / -m com.system.permissions.RequestPermission 0
+// gdbus call -e -d com.system.permissions -o / -m com.system.permissions.CheckApplicationHasPermission /usr/bin/com.example.example 0
+// gdbus call -e -d com.system.permissions -o / -m com.system.permissions.CheckApplicationHasPermission /usr/bin/gdbus 0
+
+// gdbus call -e -d com.system.time -o / -m com.system.time.GetSystemTime
